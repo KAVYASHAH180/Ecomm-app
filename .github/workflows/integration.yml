@@ -1,55 +1,13 @@
-name: Continuous Integration
+name : Continuous Integration
 
-on:
-  # if any push on main branch
+# only runs when the is actually merged to main branch
+on :
   push:
-    branches:
-  # if any pull request on main branch
-  pull_request:
-
+    # only when there is a push on main branch
+    branches : ["main"]    
 
 jobs:
-# Job for Backend
-  backend-ci:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # see what node versions are supported by our application
-        node-version: []   # node version we are testing ( must be >20 )
-
-    defaults:
-      run:
-        # asking to check the code in the backend folder
-        working-directory: ./backend
-
-    steps:
-      # get the code from the repo
-      - name : Checkout Code
-        uses :              # github action to get in the repos root folder
-
-      # install nodejs
-      - name : Setup Node.js
-        uses :              # github action to install nodejs
-        with:
-          node-version : {{matrix.node-version}} # refernce the node-version set above
-          cache :           # command to install the node packages
-          cache-dependency-path :           # path to the package file
-
-
-      # install dependencies
-      - name : Install dependencies
-        run :
-
-      # generate prisma client
-      - name : Prisma Client
-        run :
-
-      #  check the build
-      - name : Build Check
-        run :
-
-# Job for Frontend
-  frontend-ci :
+  build-and-deploy:
     runs-on : ubuntu-latest
     strategy :
       matrix :
@@ -62,22 +20,31 @@ jobs:
         working-directory: ./frontend
 
     steps :
-      - name : Check Code
-        uses : actions/checkout@v4
+    # setup
+    - name : Setup
+      uses : actions/checkout@v4
 
-      - name : Setup Node.js ${{ matrix.node-version }}
-        uses : actions/setup-node@v4
-        with:
-          node-version : {{matrix.node-version}}
-          cache :           # command to install the node packages
-          cache-dependency-path :           # path to the package file
+    # dockerhub login
+    - name : Login to Docker
+      uses : docker/login-action@v2
+      with :
+        username : ${{ secrets.DOCKER_USERNAME }}  # dockerhub username
+        password : ${{ secrets.DOCKER_PASSWORD }}  # dockerhub access token
 
-      - name : Install Dependencies
-        run : npm install
+    # build and push the backend image to dockerhub
+    - name : Build and Push Backend
+      uses : docker/build-push-action@v5
+      with :
+        context :             # folder where the script is to be implemented
+                              # command that ensure push
+        tags : ${{ secrets.DOCKER_USERNAME }}/ecommerce-application-backend:latest
 
-      - name : Run Lint
-        run :             # command to run lint
-
-      - name : Build Check
-        run :             # command to build the application 
-
+    # build and push the frontend image to dockerhub
+    - name :  Build and Push Frontend
+      uses : docker/build-push-action@v5
+      with :
+        context :            
+ # folder where the script is to be implemented
+        push : true
+        tags : ${{ secrets.DOCKER_USERNAME }}/ecommerce-application-frontend:latest
+            # the name that our file would have
