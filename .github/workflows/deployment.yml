@@ -36,5 +36,5 @@ jobs:
       with :
         context : ./frontend
         push : true
-        tags :          
+        tags : ${{ secrets.DOCKER_USERNAME }}/ecommerce-application-frontend:latest
         #/ecommerce-application-frontend:latest
